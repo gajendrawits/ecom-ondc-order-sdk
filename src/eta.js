@@ -13,25 +13,49 @@ function isoDurationToMilliseconds(iso) {
 }
 
 function isETABreached(data) {
-  const currentTime = new Date(Date.now());
+  if (!data || typeof data !== "object") {
+    return false;
+  }
 
+  if (!data.createdAt || !data.createdAt.$date) {
+    return false;
+  }
+
+  if (!Array.isArray(data.fulfillments) || data.fulfillments.length === 0) {
+    return false;
+  }
+
+  const currentTime = new Date();
   const createdAt = new Date(data.createdAt.$date);
+
+  const deliveryFulfillment = data.fulfillments.find(
+    (fulfillment) => fulfillment?.type === "Delivery"
+  );
+
+  if (!deliveryFulfillment) {
+    return false;
+  }
+
+  if (!deliveryFulfillment["@ondc/org/TAT"]) {
+    return false;
+  }
+
   const deliveryTime = isoDurationToMilliseconds(
-    data.fulfillments[0]["@ondc/org/TAT"]
+    deliveryFulfillment["@ondc/org/TAT"]
   );
   const deliveryETA = new Date(createdAt.getTime() + deliveryTime);
 
-  const deliveryFulfillment = data.fulfillments.find(
-    (fulfillment) => fulfillment.type === "Delivery"
-  );
+  if (!deliveryFulfillment.state?.descriptor?.code) {
+    return false;
+  }
 
   if (deliveryFulfillment.state.descriptor.code === "Pending") {
     // Pre-Ship ETA Breach
-    return currentTime >= deliveryETA ? "y" : "n";
+    return currentTime >= deliveryETA;
   } else {
     // Post-Ship ETA breach
-    const ETA = deliveryETA - currentTime;
-    const halfETA = ETA / 2;
+    const ETA = deliveryETA - createdAt;
+    const halfETA = Math.max(ETA / 2, 0); // Ensure non-negative
 
     let buffer;
     if (data.domain === "ONDC:RET10") {
@@ -40,7 +64,7 @@ function isETABreached(data) {
       buffer = Math.min(2 * 24 * 60 * 60 * 1000, halfETA);
     }
 
-    return currentTime >= new Date(deliveryETA.getTime() + buffer) ? "y" : "n";
+    return currentTime >= new Date(deliveryETA.getTime() + buffer);
   }
 }
 export { isETABreached };
