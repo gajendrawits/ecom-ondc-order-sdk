@@ -14,15 +14,15 @@ function isoDurationToMilliseconds(iso) {
 
 function isETABreached(data) {
   if (!data || typeof data !== "object") {
-    return false;
+    return true;
   }
 
   if (!data.createdAt || !data.createdAt.$date) {
-    return false;
+    return true;
   }
 
   if (!Array.isArray(data.fulfillments) || data.fulfillments.length === 0) {
-    return false;
+    return true;
   }
 
   const currentTime = new Date();
@@ -33,11 +33,11 @@ function isETABreached(data) {
   );
 
   if (!deliveryFulfillment) {
-    return false;
+    return true;
   }
 
   if (!deliveryFulfillment["@ondc/org/TAT"]) {
-    return false;
+    return true;
   }
 
   const deliveryTime = isoDurationToMilliseconds(
@@ -46,7 +46,7 @@ function isETABreached(data) {
   const deliveryETA = new Date(createdAt.getTime() + deliveryTime);
 
   if (!deliveryFulfillment.state?.descriptor?.code) {
-    return false;
+    return true;
   }
 
   if (deliveryFulfillment.state.descriptor.code === "Pending") {
