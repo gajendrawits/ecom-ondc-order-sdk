@@ -1,2 +1,1 @@
-import { isETABreached } from "./eta.js";
-export default { isETABreached };
+export { isETABreached } from "./eta.js";
