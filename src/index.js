@@ -1,2 +1,2 @@
-export { isETABreached } from "./eta.js";
-export { isCancellable } from "./cancelability.js";
+import { isETABreached } from "./eta.js";
+export default { isETABreached };
