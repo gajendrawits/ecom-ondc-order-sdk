@@ -12,7 +12,7 @@ function isoDurationToMilliseconds(iso) {
   return (((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1000;
 }
 
-function isETABreach(data) {
+function isETABreached(data) {
   const currentTime = new Date(Date.now());
 
   const createdAt = new Date(data.createdAt.$date);
@@ -44,4 +44,4 @@ function isETABreach(data) {
   }
 }
 
-module.exports = isETABreach;
+module.exports = isETABreached;
