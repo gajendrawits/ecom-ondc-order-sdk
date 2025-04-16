@@ -16,5 +16,5 @@ A lightweight, plug-and-play SDK to handle core order-related logic for ONDC-com
 Install directly from this public GitHub repository:
 
 ```bash
-https://github.com/gajendrawits/ecom-ondc-order-sdk
+npm install https://github.com/gajendrawits/ecom-ondc-order-sdk
 ```
