@@ -16,5 +16,14 @@ A lightweight, plug-and-play SDK to handle core order-related logic for ONDC-com
 Install directly from this public GitHub repository:
 
 ```bash
-npm install https://github.com/gajendrawits/ecom-ondc-order-sdk
+npm install https://<YOUR_GITHUB_USERNAME>:<YOUR_PERSONAL_ACCESS_TOKEN>@github.com/navya-app/ecom-ondc-util-sdk
+
 ```
+---
+
+## 🧩 Usage
+
+First, import the required functions in your project:
+
+```js
+const { isETABreached, isCancellable } = require("ecom-ondc-order-sdk");
