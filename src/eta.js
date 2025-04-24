@@ -17,7 +17,7 @@ function isETABreached(data) {
     return true;
   }
 
-  if (!data.createdAt || !data.createdAt.$date) {
+  if (!data.createdAt || !data.createdAt) {
     return true;
   }
 
@@ -26,7 +26,7 @@ function isETABreached(data) {
   }
 
   const currentTime = new Date();
-  const createdAt = new Date(data.createdAt.$date);
+  const createdAt = new Date(data.createdAt);
 
   const deliveryFulfillment = data.fulfillments.find(
     (fulfillment) => fulfillment?.type === "Delivery"
