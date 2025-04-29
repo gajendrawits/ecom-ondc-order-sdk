@@ -1,4 +1,12 @@
+import { notCancellableState } from "../util/orderState";
+
 function isCancellable(data) {
+  const deliveryFulfillment = data.fulfillments.find(
+    (fulfillment) => fulfillment?.type === "Delivery"
+  );
+  if (notCancellableState.includes(deliveryFulfillment.state.descriptor.code)) {
+    return false;
+  }
   if (!data || typeof data !== "object" || Array.isArray(data)) {
     return false;
   }
