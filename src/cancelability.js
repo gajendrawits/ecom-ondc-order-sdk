@@ -1,4 +1,4 @@
-import { notCancellableState } from "../util/orderState";
+import { notCancellableState } from "../util/orderState.js";
 
 export const isCancellable = (data) => {
   if (!data || typeof data !== "object" || Array.isArray(data)) {

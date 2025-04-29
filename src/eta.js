@@ -1,8 +1,4 @@
-import {
-  excludeBufferState,
-  includeBufferState,
-  notCancellableState,
-} from "../util/orderState.js";
+import { excludeBufferState, includeBufferState } from "../util/orderState.js";
 function isoDurationToMilliseconds(iso) {
   const regex = /P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?/;
   const match = iso.match(regex);
@@ -56,6 +52,9 @@ export const isETABreached = (data) => {
 
   if (excludeBufferState.includes(deliveryFulfillment.state.descriptor.code)) {
     // Pre-Ship ETA Breach
+    console.log(currentTime);
+    console.log(deliveryETA);
+
     return currentTime >= deliveryETA;
   } else if (
     includeBufferState.includes(deliveryFulfillment.state.descriptor.code)
@@ -77,4 +76,4 @@ export const isETABreached = (data) => {
   } else {
     return false;
   }
-}
+};
