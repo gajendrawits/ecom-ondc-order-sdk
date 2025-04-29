@@ -17,7 +17,7 @@ function isoDurationToMilliseconds(iso) {
   return (((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1000;
 }
 
-function isETABreached(data) {
+export const isETABreached = (data) => {
   if (!data || typeof data !== "object") {
     return false;
   }
@@ -78,4 +78,3 @@ function isETABreached(data) {
     return false;
   }
 }
-export { isETABreached };

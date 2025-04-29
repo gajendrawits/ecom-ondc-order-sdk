@@ -1,4 +1,4 @@
-function isCancellable(data) {
+export const isCancellable = (data) => {
   if (!data || typeof data !== "object" || Array.isArray(data)) {
     return false;
   }
@@ -27,5 +27,3 @@ function isCancellable(data) {
     return item.product["@ondc/org/cancellable"] === true;
   });
 }
-
-export { isCancellable };
