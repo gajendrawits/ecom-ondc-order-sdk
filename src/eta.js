@@ -1,3 +1,8 @@
+import {
+  excludeBufferState,
+  includeBufferState,
+  notCancellableState,
+} from "../util/orderState";
 function isoDurationToMilliseconds(iso) {
   const regex = /P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?/;
   const match = iso.match(regex);
@@ -49,22 +54,28 @@ function isETABreached(data) {
     return false;
   }
 
-  if (deliveryFulfillment.state.descriptor.code === "Pending") {
+  if (excludeBufferState.includes(deliveryFulfillment.state.descriptor.code)) {
     // Pre-Ship ETA Breach
     return currentTime >= deliveryETA;
-  } else {
-    // Post-Ship ETA breach
-    const ETA = deliveryETA - createdAt;
-    const halfETA = Math.max(ETA / 2, 0); // Ensure non-negative
+  } else if (
+    includeBufferState.includes(deliveryFulfillment.state.descriptor.code)
+  ) {
+    {
+      // Post-Ship ETA breach
+      const ETA = deliveryETA - createdAt;
+      const halfETA = Math.max(ETA / 2, 0); // Ensure non-negative
 
-    let buffer;
-    if (data.domain === "ONDC:RET10") {
-      buffer = Math.min(0.5 * 60 * 60 * 1000, halfETA);
-    } else {
-      buffer = Math.min(2 * 24 * 60 * 60 * 1000, halfETA);
+      let buffer;
+      if (data.domain === "ONDC:RET10") {
+        buffer = Math.min(0.5 * 60 * 60 * 1000, halfETA);
+      } else {
+        buffer = Math.min(2 * 24 * 60 * 60 * 1000, halfETA);
+      }
+
+      return currentTime >= new Date(deliveryETA.getTime() + buffer);
     }
-
-    return currentTime >= new Date(deliveryETA.getTime() + buffer);
+  } else {
+    return false;
   }
 }
 export { isETABreached };
