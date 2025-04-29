@@ -52,9 +52,6 @@ export const isETABreached = (data) => {
 
   if (excludeBufferState.includes(deliveryFulfillment.state.descriptor.code)) {
     // Pre-Ship ETA Breach
-    console.log(currentTime);
-    console.log(deliveryETA);
-
     return currentTime >= deliveryETA;
   } else if (
     includeBufferState.includes(deliveryFulfillment.state.descriptor.code)
