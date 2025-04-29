@@ -2,7 +2,7 @@ import {
   excludeBufferState,
   includeBufferState,
   notCancellableState,
-} from "../util/orderState";
+} from "../util/orderState.js";
 function isoDurationToMilliseconds(iso) {
   const regex = /P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?/;
   const match = iso.match(regex);
@@ -17,7 +17,7 @@ function isoDurationToMilliseconds(iso) {
   return (((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1000;
 }
 
-function isETABreached(data) {
+export const isETABreached = (data) => {
   if (!data || typeof data !== "object") {
     return false;
   }
@@ -78,4 +78,3 @@ function isETABreached(data) {
     return false;
   }
 }
-export { isETABreached };

@@ -1,12 +1,6 @@
 import { notCancellableState } from "../util/orderState";
 
-function isCancellable(data) {
-  const deliveryFulfillment = data.fulfillments.find(
-    (fulfillment) => fulfillment?.type === "Delivery"
-  );
-  if (notCancellableState.includes(deliveryFulfillment.state.descriptor.code)) {
-    return false;
-  }
+export const isCancellable = (data) => {
   if (!data || typeof data !== "object" || Array.isArray(data)) {
     return false;
   }
@@ -18,7 +12,12 @@ function isCancellable(data) {
   if (data.confirmedItems.length === 0) {
     return false;
   }
-
+  const deliveryFulfillment = data.fulfillments.find(
+    (fulfillment) => fulfillment?.type === "Delivery"
+  );
+  if (notCancellableState.includes(deliveryFulfillment.state.descriptor.code)) {
+    return false;
+  }
   return data.confirmedItems.every((item) => {
     if (!item || typeof item !== "object" || Array.isArray(item)) {
       return false;
@@ -34,6 +33,4 @@ function isCancellable(data) {
 
     return item.product["@ondc/org/cancellable"] === true;
   });
-}
-
-export { isCancellable };
+};
