@@ -2,7 +2,7 @@ import {
   excludeBufferState,
   includeBufferState,
   notCancellableState,
-} from "../util/orderState";
+} from "../util/orderState.js";
 function isoDurationToMilliseconds(iso) {
   const regex = /P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?/;
   const match = iso.match(regex);
