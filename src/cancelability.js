@@ -12,10 +12,10 @@ export const isCancellable = (data) => {
   if (data.confirmedItems.length === 0) {
     return false;
   }
-  const deliveryFulfillment = data.fulfillments.find(
+  const deliveryFulfillment = data?.fulfillments?.find(
     (fulfillment) => fulfillment?.type === "Delivery"
   );
-  if (notCancellableState.includes(deliveryFulfillment.state.descriptor.code)) {
+  if (notCancellableState.includes(deliveryFulfillment?.state?.descriptor?.code)) {
     return false;
   }
   return data.confirmedItems.every((item) => {

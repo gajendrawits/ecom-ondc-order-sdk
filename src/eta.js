@@ -46,15 +46,15 @@ export const isETABreached = (data) => {
   );
   const deliveryETA = new Date(createdAt.getTime() + deliveryTime);
 
-  if (!deliveryFulfillment.state?.descriptor?.code) {
+  if (!deliveryFulfillment?.state?.descriptor?.code) {
     return false;
   }
 
-  if (excludeBufferState.includes(deliveryFulfillment.state.descriptor.code)) {
+  if (excludeBufferState.includes(deliveryFulfillment?.state?.descriptor?.code)) {
     // Pre-Ship ETA Breach
     return currentTime >= deliveryETA;
   } else if (
-    includeBufferState.includes(deliveryFulfillment.state.descriptor.code)
+    includeBufferState.includes(deliveryFulfillment?.state?.descriptor?.code)
   ) {
     {
       // Post-Ship ETA breach
