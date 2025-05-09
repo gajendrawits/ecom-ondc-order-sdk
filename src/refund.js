@@ -214,110 +214,63 @@ export const refund = (
   actionType,
   action,
   isETABreached,
-  on_cancelPayload,
-  on_selectPayload,
-  on_searchPayload
+  charge,
+  on_cancelPayload
 ) => {
   try {
-    const totalOrderAmount =
-      parseFloat(on_cancelPayload?.message?.order?.payment?.params?.amount) ||
-      0;
+    const paymentGatewayAmount = parseFloat(charge?.quote?.totalOrderValue)
 
-    let convenienceFee = 0;
+    const platformFees = charge?.quote?.platformFees
+    const platformFeesTax = charge?.quote?.taxes?.platformFeesTax
 
-    const convenienceFeeItem =
-      on_cancelPayload?.message?.order?.quote?.breakup?.find(
-        (item) =>
-          item["@ondc/org/title_type"] === "misc" &&
-          item.title === "Convenience Fee"
-      );
+    const shouldRefundPlatformFeeWithTax = refundPlatformFee(actor, actionType, action, isETABreached)
 
-    if (convenienceFeeItem) {
-      convenienceFee = parseFloat(convenienceFeeItem.price.value) || 0;
-    }
-
-    const shouldRefundPlatformFee = refundPlatformFee(
-      actor,
-      actionType,
-      action,
-      isETABreached
-    );
-
-    let refundAmount;
-
-    if (shouldRefundPlatformFee) {
-      refundAmount = totalOrderAmount;
-    } else if (!shouldRefundPlatformFee && actionType === "full") {
-      refundAmount = totalOrderAmount - convenienceFee;
+    if (shouldRefundPlatformFeeWithTax) {
+      return paymentGatewayAmount
+    } else if (!shouldRefundPlatformFeeWithTax && actionType === "full") {
+      return paymentGatewayAmount - platformFees - platformFeesTax
     } else {
-      const items = on_cancelPayload?.message?.order?.items;
-      const itemMap = {};
-
-      items.forEach((item) => {
-        const itemId = item.id;
-        if (!itemMap[itemId]) {
-          itemMap[itemId] = {
-            originalCount: 0,
-            cancelledCount: 0,
-          };
-        }
-
-        if (item.fulfillment_id.startsWith("Cancel-")) {
-          itemMap[itemId].cancelledCount = item.quantity.count;
-        } else {
-          itemMap[itemId].originalCount = item.quantity.count;
-        }
-      });
-
       const cancelledItems = [];
 
-      for (const itemId in itemMap) {
-        const { originalCount, cancelledCount } = itemMap[itemId];
-        const cancelledItemCount = cancelledCount - originalCount;
-
-        if (cancelledItemCount > 0) {
+      const items = on_cancelPayload?.message?.order?.items;
+      items.forEach((item) => {
+        if (item.fulfillment_id.includes("RTO")) {
           cancelledItems.push({
-            itemId: itemId,
-            cancelledQuantity: cancelledItemCount,
-          });
+            itemId: item?.id,
+            cancelledQuantity: item?.quantity?.count
+          })
         }
-      }
-
-      let totalCancelledAmount = 0;
-
-      cancelledItems.forEach((item) => {
-        const itemPrice = on_cancelPayload?.message?.order?.quote?.breakup.find(
-          (e) => e["@ondc/org/item_id"] === item.itemId
-        )?.item?.price?.value;
-        item["cancelledAmount"] = item.cancelledQuantity * itemPrice;
-        totalCancelledAmount += item["cancelledAmount"];
       });
 
-      const totalItemsCancelled = cancelledItems.length;
+      let totalRefundAmount = 0
 
-      const discountValue =
-        on_selectPayload?.message?.order?.quote?.breakup?.find(
-          (e) => e["@ondc/org/title_type"] === "offer"
-        )?.price?.value;
+      cancelledItems.forEach((cancelledItem) => {
+        let currentRefundAmount = 0
 
-      const discountName = on_selectPayload?.message?.order?.quote?.breakup
-        ?.find((e) => e["@ondc/org/title_type"] === "offer")
-        ?.item?.tags?.find((e) => e.code === "offer")
-        ?.list?.find((e) => e.code === "id")?.value;
+        let orderSellingPrice = 0
+        charge?.quote?.itemsList.forEach((item) => {
+          orderSellingPrice += item?.sellerPrice * item?.quantity
+        })
 
-      const mov = on_searchPayload?.message?.catalog["bpp/providers"][0]?.offers
-        .find((e) => e.id === discountName)
-        ?.tags.find((e) => e.code === "qualifier")?.list[0]?.value;
+        const FA_Discount = charge?.quote?.ONDC_FA
+        const DigiHaatCoupon = charge?.quote?.totalOrderValueAfterSubsidyBeforeCoupon - charge?.quote?.totalOrderValue
+        const mov = charge?.quote?.mov
 
-      refundAmount =
-        totalCancelledAmount > mov
-          ? totalOrderAmount - convenienceFee
-          : totalOrderAmount -
-            convenienceFee +
-            discountValue * totalItemsCancelled;
+        const cancelledItemAmount = charge?.quote?.itemsList?.find((item) => item.itemId === cancelledItem.itemId)?.sellerPrice * cancelledItem?.cancelledQuantity
+        const totalOrderValueAfterRefund = Math.max(orderSellingPrice - cancelledItemAmount - totalRefundAmount, 0)
+
+        if (totalOrderValueAfterRefund > mov) {
+          currentRefundAmount = Math.max(cancelledItemAmount - FA_Discount - (DigiHaatCoupon * cancelledItemAmount / orderSellingPrice) - platformFees - platformFeesTax, 0)
+        } else {
+          currentRefundAmount = Math.max(cancelledItemAmount - FA_Discount - DigiHaatCoupon - platformFees - platformFeesTax, 0)
+        }
+
+        totalRefundAmount += currentRefundAmount
+      })
+
+      return parseFloat(parseFloat(totalRefundAmount).toFixed(2))
     }
 
-    return Math.max(0, refundAmount);
   } catch (error) {
     console.error("Error calculating refund:", error);
     return {
