@@ -218,18 +218,46 @@ export const refund = (
   on_cancelPayload
 ) => {
   try {
-    const paymentGatewayAmount = parseFloat(charge?.quote?.totalOrderValue)
+    const paymentGatewayAmount = parseFloat(charge?.quote?.totalOrderValue);
 
-    const platformFees = charge?.quote?.platformFees
-    const platformFeesTax = charge?.quote?.taxes?.platformFeesTax
+    const platformFees = charge?.quote?.platformFees;
+    const platformFeesTax = charge?.quote?.taxes?.platformFeesTax;
 
-    const shouldRefundPlatformFeeWithTax = refundPlatformFee(actor, actionType, action, isETABreached)
+    const shouldRefundPlatformFeeWithTax = refundPlatformFee(
+      actor,
+      actionType,
+      action,
+      isETABreached
+    );
+
+    let platformFeesDeducted = 0;
+    let platformFeesTaxDeducted = 0;
+    let FA_DiscountDeducted = 0;
+    let DigiHaatCouponDeducted = 0;
 
     if (shouldRefundPlatformFeeWithTax) {
-      return paymentGatewayAmount
+      return {
+        refund: paymentGatewayAmount,
+        platformFeesDeducted: platformFeesDeducted,
+        platformFeesTaxDeducted: platformFeesTaxDeducted,
+        FA_DiscountDeducted: FA_DiscountDeducted,
+        DigiHaatCouponDeducted: DigiHaatCouponDeducted,
+      };
     } else if (!shouldRefundPlatformFeeWithTax && actionType === "full") {
-      return paymentGatewayAmount - platformFees - platformFeesTax
+      platformFeesDeducted = platformFees;
+      platformFeesTaxDeducted = platformFeesTax;
+
+      return {
+        refund: paymentGatewayAmount - platformFees - platformFeesTax,
+        platformFeesDeducted: platformFeesDeducted,
+        platformFeesTaxDeducted: platformFeesTaxDeducted,
+        FA_DiscountDeducted: FA_DiscountDeducted,
+        DigiHaatCouponDeducted: DigiHaatCouponDeducted,
+      };
     } else {
+      platformFeesDeducted = platformFees;
+      platformFeesTaxDeducted = platformFeesTax;
+
       const cancelledItems = [];
 
       const items = on_cancelPayload?.message?.order?.items;
@@ -237,40 +265,72 @@ export const refund = (
         if (item.fulfillment_id.includes("RTO")) {
           cancelledItems.push({
             itemId: item?.id,
-            cancelledQuantity: item?.quantity?.count
-          })
+            cancelledQuantity: item?.quantity?.count,
+          });
         }
       });
 
-      let totalRefundAmount = 0
+      let totalRefundAmount = 0;
 
       cancelledItems.forEach((cancelledItem) => {
-        let currentRefundAmount = 0
+        let currentRefundAmount = 0;
 
-        let orderSellingPrice = 0
+        let orderSellingPrice = 0;
         charge?.quote?.itemsList.forEach((item) => {
-          orderSellingPrice += item?.sellerPrice * item?.quantity
-        })
+          orderSellingPrice += item?.sellerPrice * item?.quantity;
+        });
 
-        const FA_Discount = charge?.quote?.ONDC_FA
-        const DigiHaatCoupon = charge?.quote?.totalOrderValueAfterSubsidyBeforeCoupon - charge?.quote?.totalOrderValue
-        const mov = charge?.quote?.mov
+        const FA_Discount = charge?.quote?.ONDC_FA;
+        FA_DiscountDeducted = FA_Discount;
 
-        const cancelledItemAmount = charge?.quote?.itemsList?.find((item) => item.itemId === cancelledItem.itemId)?.sellerPrice * cancelledItem?.cancelledQuantity
-        const totalOrderValueAfterRefund = Math.max(orderSellingPrice - cancelledItemAmount - totalRefundAmount, 0)
+        const DigiHaatCoupon =
+          charge?.quote?.totalOrderValueAfterSubsidyBeforeCoupon -
+          charge?.quote?.totalOrderValue;
+        const mov = charge?.quote?.mov;
+
+        const cancelledItemAmount =
+          charge?.quote?.itemsList?.find(
+            (item) => item.itemId === cancelledItem.itemId
+          )?.sellerPrice * cancelledItem?.cancelledQuantity;
+        const totalOrderValueAfterRefund = Math.max(
+          orderSellingPrice - cancelledItemAmount - totalRefundAmount,
+          0
+        );
 
         if (totalOrderValueAfterRefund > mov) {
-          currentRefundAmount = Math.max(cancelledItemAmount - FA_Discount - (DigiHaatCoupon * cancelledItemAmount / orderSellingPrice) - platformFees - platformFeesTax, 0)
+          currentRefundAmount = Math.max(
+            cancelledItemAmount -
+              FA_Discount -
+              (DigiHaatCoupon * cancelledItemAmount) / orderSellingPrice -
+              platformFees -
+              platformFeesTax,
+            0
+          );
+          DigiHaatCouponDeducted =
+            (DigiHaatCoupon * cancelledItemAmount) / orderSellingPrice;
         } else {
-          currentRefundAmount = Math.max(cancelledItemAmount - FA_Discount - DigiHaatCoupon - platformFees - platformFeesTax, 0)
+          currentRefundAmount = Math.max(
+            cancelledItemAmount -
+              FA_Discount -
+              DigiHaatCoupon -
+              platformFees -
+              platformFeesTax,
+            0
+          );
+          DigiHaatCouponDeducted = DigiHaatCoupon;
         }
 
-        totalRefundAmount += currentRefundAmount
-      })
+        totalRefundAmount += currentRefundAmount;
+      });
 
-      return parseFloat(parseFloat(totalRefundAmount).toFixed(2))
+      return {
+        refund: parseFloat(parseFloat(totalRefundAmount).toFixed(2)),
+        platformFeesDeducted: platformFeesDeducted,
+        platformFeesTaxDeducted: platformFeesTaxDeducted,
+        FA_DiscountDeducted: FA_DiscountDeducted,
+        DigiHaatCouponDeducted: DigiHaatCouponDeducted,
+      };
     }
-
   } catch (error) {
     console.error("Error calculating refund:", error);
     return {
