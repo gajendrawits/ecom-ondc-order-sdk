@@ -218,7 +218,7 @@ export const refund = (
   on_cancelPayload
 ) => {
   try {
-    const paymentGatewayAmount = parseFloat(charge?.quote?.totalOrderValue);
+    const paymentGatewayAmount = parseFloat(charge?.quote?.totalOrderValueAfterSubsidy);
 
     const platformFees = charge?.quote?.platformFees;
     const platformFeesTax = charge?.quote?.taxes?.platformFeesTax;
@@ -272,7 +272,23 @@ export const refund = (
 
       let totalRefundAmount = 0;
 
-      cancelledItems.forEach((cancelledItem) => {
+      const totalItemsInOrder = charge?.quote?.itemsList?.length;
+
+      for (let index = 0; index < cancelledItems.length; index++) {
+        const cancelledItem = cancelledItems[index];
+        
+        if (index === totalItemsInOrder - 1) {
+          console.log("here");
+          return {
+            refund: paymentGatewayAmount - totalRefundAmount,
+            platformFeesDeducted: platformFeesDeducted,
+            platformFeesTaxDeducted: platformFeesTaxDeducted,
+            FA_DiscountDeducted: parseFloat(parseFloat(FA_DiscountDeducted).toFixed(2)),
+            DigiHaatCouponDeducted: parseFloat(parseFloat(DigiHaatCouponDeducted).toFixed(2)),
+          };
+        }
+        console.log("no here");
+
         let currentRefundAmount = 0;
 
         let orderSellingPrice = 0;
@@ -285,13 +301,15 @@ export const refund = (
 
         const DigiHaatCoupon =
           charge?.quote?.totalOrderValueAfterSubsidyBeforeCoupon -
-          charge?.quote?.totalOrderValue;
+          charge?.quote?.totalOrderValueAfterSubsidy;
+
         const mov = charge?.quote?.mov;
 
         const cancelledItemAmount =
           charge?.quote?.itemsList?.find(
             (item) => item.itemId === cancelledItem.itemId
           )?.sellerPrice * cancelledItem?.cancelledQuantity;
+
         const totalOrderValueAfterRefund = Math.max(
           orderSellingPrice - cancelledItemAmount - totalRefundAmount,
           0
@@ -321,14 +339,25 @@ export const refund = (
         }
 
         totalRefundAmount += currentRefundAmount;
-      });
+      }
+
+      if (totalRefundAmount > paymentGatewayAmount)
+        return {
+          refund: 0,
+          message:
+            "Total refund amount cannot be greater than payment gateway amount",
+        };
 
       return {
         refund: parseFloat(parseFloat(totalRefundAmount).toFixed(2)),
         platformFeesDeducted: platformFeesDeducted,
         platformFeesTaxDeducted: platformFeesTaxDeducted,
-        FA_DiscountDeducted: FA_DiscountDeducted,
-        DigiHaatCouponDeducted: DigiHaatCouponDeducted,
+        FA_DiscountDeducted: parseFloat(
+          parseFloat(FA_DiscountDeducted).toFixed(2)
+        ),
+        DigiHaatCouponDeducted: parseFloat(
+          parseFloat(DigiHaatCouponDeducted).toFixed(2)
+        ),
       };
     }
   } catch (error) {
