@@ -218,7 +218,9 @@ export const refund = (
   on_cancelPayload
 ) => {
   try {
-    const paymentGatewayAmount = parseFloat(charge?.quote?.totalOrderValueAfterSubsidy);
+    const paymentGatewayAmount = parseFloat(
+      charge?.quote?.totalOrderValueAfterSubsidy
+    );
 
     const platformFees = charge?.quote?.platformFees;
     const platformFeesTax = charge?.quote?.taxes?.platformFeesTax;
@@ -265,6 +267,7 @@ export const refund = (
         if (item.fulfillment_id.includes("RTO")) {
           cancelledItems.push({
             itemId: item?.id,
+            fulfillmentId: item?.fulfillment_id,
             cancelledQuantity: item?.quantity?.count,
           });
         }
@@ -272,22 +275,8 @@ export const refund = (
 
       let totalRefundAmount = 0;
 
-      const totalItemsInOrder = charge?.quote?.itemsList?.length;
-
       for (let index = 0; index < cancelledItems.length; index++) {
         const cancelledItem = cancelledItems[index];
-        
-        if (index === totalItemsInOrder - 1) {
-          console.log("here");
-          return {
-            refund: paymentGatewayAmount - totalRefundAmount,
-            platformFeesDeducted: platformFeesDeducted,
-            platformFeesTaxDeducted: platformFeesTaxDeducted,
-            FA_DiscountDeducted: parseFloat(parseFloat(FA_DiscountDeducted).toFixed(2)),
-            DigiHaatCouponDeducted: parseFloat(parseFloat(DigiHaatCouponDeducted).toFixed(2)),
-          };
-        }
-        console.log("no here");
 
         let currentRefundAmount = 0;
 
@@ -296,8 +285,16 @@ export const refund = (
           orderSellingPrice += item?.sellerPrice * item?.quantity;
         });
 
-        const FA_Discount = charge?.quote?.ONDC_FA;
-        FA_DiscountDeducted = FA_Discount;
+        const FA_Discount = Math.abs(
+          on_cancelPayload?.message?.order?.quote?.breakup?.find(
+            (e) =>
+              cancelledItem?.fulfillmentId.includes(e["@ondc/org/item_id"]) &&
+              e["@ondc/org/title_type"].toLowerCase() === "discount" &&
+              e.title === "ONDC_FA"
+          )?.price?.value ?? 0
+        );
+
+        FA_DiscountDeducted += FA_Discount;
 
         const DigiHaatCoupon =
           charge?.quote?.totalOrderValueAfterSubsidyBeforeCoupon -
@@ -324,7 +321,7 @@ export const refund = (
               platformFeesTax,
             0
           );
-          DigiHaatCouponDeducted =
+          DigiHaatCouponDeducted +=
             (DigiHaatCoupon * cancelledItemAmount) / orderSellingPrice;
         } else {
           currentRefundAmount = Math.max(
@@ -335,7 +332,23 @@ export const refund = (
               platformFeesTax,
             0
           );
-          DigiHaatCouponDeducted = DigiHaatCoupon;
+          DigiHaatCouponDeducted += DigiHaatCoupon;
+        }
+
+        const totalItemsInOrder = charge?.quote?.itemsList?.length;
+
+        if (index === totalItemsInOrder - 1) {
+          return {
+            refund: paymentGatewayAmount - totalRefundAmount,
+            platformFeesDeducted: platformFeesDeducted,
+            platformFeesTaxDeducted: platformFeesTaxDeducted,
+            FA_DiscountDeducted: parseFloat(
+              parseFloat(FA_DiscountDeducted).toFixed(2)
+            ),
+            DigiHaatCouponDeducted: parseFloat(
+              parseFloat(DigiHaatCouponDeducted).toFixed(2)
+            ),
+          };
         }
 
         totalRefundAmount += currentRefundAmount;
