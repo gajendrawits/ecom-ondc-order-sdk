@@ -276,6 +276,22 @@ export const refund = (
       let totalRefundAmount = 0;
 
       for (let index = 0; index < cancelledItems.length; index++) {
+        const totalItemsInOrder = charge?.quote?.itemsList?.length;
+
+        if (index === totalItemsInOrder - 1) {
+          return {
+            refund: paymentGatewayAmount - totalRefundAmount,
+            platformFeesDeducted: platformFeesDeducted,
+            platformFeesTaxDeducted: platformFeesTaxDeducted,
+            FA_DiscountDeducted: parseFloat(
+              parseFloat(FA_DiscountDeducted).toFixed(2)
+            ),
+            DigiHaatCouponDeducted: parseFloat(
+              parseFloat(DigiHaatCouponDeducted).toFixed(2)
+            ),
+          };
+        }
+
         const cancelledItem = cancelledItems[index];
 
         let currentRefundAmount = 0;
@@ -333,22 +349,6 @@ export const refund = (
             0
           );
           DigiHaatCouponDeducted += DigiHaatCoupon;
-        }
-
-        const totalItemsInOrder = charge?.quote?.itemsList?.length;
-
-        if (index === totalItemsInOrder - 1) {
-          return {
-            refund: paymentGatewayAmount - totalRefundAmount,
-            platformFeesDeducted: platformFeesDeducted,
-            platformFeesTaxDeducted: platformFeesTaxDeducted,
-            FA_DiscountDeducted: parseFloat(
-              parseFloat(FA_DiscountDeducted).toFixed(2)
-            ),
-            DigiHaatCouponDeducted: parseFloat(
-              parseFloat(DigiHaatCouponDeducted).toFixed(2)
-            ),
-          };
         }
 
         totalRefundAmount += currentRefundAmount;
