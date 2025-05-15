@@ -215,7 +215,8 @@ export const refund = (
   action,
   isETABreached,
   charge,
-  on_cancelPayload
+  on_cancelPayload,
+  refundFl
 ) => {
   try {
     const paymentGatewayAmount = parseFloat(
@@ -260,18 +261,33 @@ export const refund = (
       platformFeesDeducted = platformFees;
       platformFeesTaxDeducted = platformFeesTax;
 
-      const cancelledItems = [];
+      const items = [];
 
-      const items = on_cancelPayload?.message?.order?.items;
-      items.forEach((item) => {
-        if (item.fulfillment_id.includes("RTO")) {
-          cancelledItems.push({
-            itemId: item?.id,
-            fulfillmentId: item?.fulfillment_id,
-            cancelledQuantity: item?.quantity?.count,
-          });
+      let count = 0;
+      on_cancelPayload?.message?.order?.items.forEach((item) => {
+        if (
+          item?.tags?.find((tag) => tag?.list?.find((e) => e?.value === "item"))
+        ) {
+          if (count === 1) {
+            // Item is forward fulfillment (cancelled items)
+            items.push({
+              itemId: item?.id,
+              fulfillmentId: item?.fulfillment_id,
+              cancelledQuantity: item?.quantity?.count,
+            });
+            count--;
+          } else {
+            // Item is backward fulfillment (not cancelled items)
+            count++;
+          }
         }
       });
+
+      const refundedItemsFlId = refundFl?.map((item) => item?.flId);
+
+      const cancelledItems = items.filter(
+        (item) => !refundedItemsFlId.includes(item?.fulfillmentId)
+      );
 
       let totalRefundAmount = 0;
 
