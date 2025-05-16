@@ -317,10 +317,16 @@ export const refund = (
           orderSellingPrice += item?.sellerPrice * item?.quantity;
         });
 
+        const itemId = cancelledItem?.itemId;
+        const backwardFulfillmentId =
+          on_cancelPayload?.message?.order?.items?.find(
+            (item) => item?.id === itemId
+          )?.fulfillment_id;
+
         const FA_Discount = Math.abs(
           on_cancelPayload?.message?.order?.quote?.breakup?.find(
             (e) =>
-              cancelledItem?.fulfillmentId.includes(e["@ondc/org/item_id"]) &&
+              backwardFulfillmentId === e["@ondc/org/item_id"] &&
               e["@ondc/org/title_type"].toLowerCase() === "discount" &&
               e.title === "ONDC_FA"
           )?.price?.value ?? 0
