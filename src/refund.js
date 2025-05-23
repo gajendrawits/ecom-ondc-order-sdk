@@ -263,23 +263,18 @@ export const refund = (
 
       const items = [];
 
-      let count = 0;
-      on_cancelPayload?.message?.order?.items.forEach((item) => {
-        if (
-          item?.tags?.find((tag) => tag?.list?.find((e) => e?.value === "item"))
-        ) {
-          if (count === 1) {
-            // Item is forward fulfillment (cancelled items)
-            items.push({
-              itemId: item?.id,
-              fulfillmentId: item?.fulfillment_id,
-              cancelledQuantity: item?.quantity?.count,
-            });
-            count--;
-          } else {
-            // Item is backward fulfillment (not cancelled items)
-            count++;
-          }
+      const itemsInOnCancelPayload = on_cancelPayload?.message?.order?.items;
+      const itemIds = [];
+
+      itemsInOnCancelPayload.forEach((item) => {
+        if (itemIds.includes(item?.id)) {
+          items.push({
+            itemId: item?.id,
+            fulfillmentId: item?.fulfillment_id,
+            cancelledQuantity: item?.quantity?.count,
+          });
+        } else {
+          itemIds.push(item?.id);
         }
       });
 
@@ -318,15 +313,11 @@ export const refund = (
         });
 
         const itemId = cancelledItem?.itemId;
-        const backwardFulfillmentId =
-          on_cancelPayload?.message?.order?.items?.find(
-            (item) => item?.id === itemId
-          )?.fulfillment_id;
 
         const FA_Discount = Math.abs(
           on_cancelPayload?.message?.order?.quote?.breakup?.find(
             (e) =>
-              backwardFulfillmentId === e["@ondc/org/item_id"] &&
+              itemId === e["@ondc/org/item_id"] &&
               e["@ondc/org/title_type"].toLowerCase() === "discount" &&
               e.title === "ONDC_FA"
           )?.price?.value ?? 0
