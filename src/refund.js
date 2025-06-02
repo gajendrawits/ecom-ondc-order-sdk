@@ -394,5 +394,3 @@ export const refund = (
     };
   }
 };
-
-console.log("hello")
