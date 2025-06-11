@@ -20,19 +20,24 @@ export const calculateEtaTime = (data) => {
   let promiseBuffer
 
   if (domain === "ONDC:RET11") {
-    promiseBuffer = 10 * 60 * 1000
+    // promiseBuffer = 10 * 60 * 1000
+    promiseBuffer = 0
   }
   else if (domain === "ONDC:RET12") {
-    promiseBuffer = 30 * 60 * 1000
+    // promiseBuffer = 30 * 60 * 1000
+    promiseBuffer = 0
   }
   else if (domain === "ONDC:RET13") {
-    promiseBuffer = 20 * 60 * 1000
+    // promiseBuffer = 20 * 60 * 1000
+    promiseBuffer = 0
   }
   else if (domain === "ONDC:RET14") {
-    promiseBuffer = 30 * 60 * 1000
+    // promiseBuffer = 30 * 60 * 1000
+    promiseBuffer = 0
   }
   else {
-    promiseBuffer = 10 * 60 * 1000
+    // promiseBuffer = 10 * 60 * 1000
+    promiseBuffer = 0
   }
 
   const createdAt = new Date(data?.createdAt);
