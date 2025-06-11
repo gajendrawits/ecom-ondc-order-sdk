@@ -14,22 +14,48 @@ function isoDurationToMilliseconds(iso) {
   return (((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1000;
 }
 
-function calculatePromiseBuffer(domain) {
+export const calculateEtaTime = (data) => {
+  const domain = data?.domain
+
+  let promiseBuffer
+
   if (domain === "ONDC:RET11") {
-    return 10 * 60 * 1000
+    promiseBuffer = 10 * 60 * 1000
   }
   else if (domain === "ONDC:RET12") {
-    return 30 * 60 * 1000
+    promiseBuffer = 30 * 60 * 1000
   }
   else if (domain === "ONDC:RET13") {
-    return 20 * 60 * 1000
+    promiseBuffer = 20 * 60 * 1000
   }
   else if (domain === "ONDC:RET14") {
-    return 30 * 60 * 1000
+    promiseBuffer = 30 * 60 * 1000
   }
   else {
-    return 10 * 60 * 1000
+    promiseBuffer = 10 * 60 * 1000
   }
+
+  const createdAt = new Date(data?.createdAt);
+
+  const deliveryFulfillment = data?.fulfillments?.find(
+    (fulfillment) => fulfillment?.type === "Delivery"
+  );
+
+  if (!deliveryFulfillment) {
+    return false;
+  }
+
+  if (!deliveryFulfillment["@ondc/org/TAT"]) {
+    return false;
+  }
+
+  const deliveryTime = isoDurationToMilliseconds(
+    deliveryFulfillment["@ondc/org/TAT"]
+  );
+
+  const deliveryETA = new Date(createdAt.getTime() + deliveryTime + promiseBuffer);
+
+  return deliveryETA
 }
 
 export const isETABreached = (data) => {
@@ -64,9 +90,7 @@ export const isETABreached = (data) => {
     deliveryFulfillment["@ondc/org/TAT"]
   );
 
-  const promiseBuffer = calculatePromiseBuffer(data.domain)
-
-  const deliveryETA = new Date(createdAt.getTime() + deliveryTime + promiseBuffer);
+  const deliveryETA = new Date(createdAt.getTime() + deliveryTime);
 
   if (!deliveryFulfillment?.state?.descriptor?.code) {
     return false;
