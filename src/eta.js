@@ -1,4 +1,5 @@
 import { excludeBufferState, includeBufferState } from "../util/orderState.js";
+
 function isoDurationToMilliseconds(iso) {
   const regex = /P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?/;
   const match = iso.match(regex);
@@ -11,6 +12,24 @@ function isoDurationToMilliseconds(iso) {
   const seconds = parseInt(match[4] || "0", 10);
 
   return (((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1000;
+}
+
+function calculatePromiseBuffer(domain) {
+  if (domain === "ONDC:RET11") {
+    return 10 * 60 * 1000
+  }
+  else if (domain === "ONDC:RET12") {
+    return 30 * 60 * 1000
+  }
+  else if (domain === "ONDC:RET13") {
+    return 20 * 60 * 1000
+  }
+  else if (domain === "ONDC:RET14") {
+    return 30 * 60 * 1000
+  }
+  else {
+    return 10 * 60 * 1000
+  }
 }
 
 export const isETABreached = (data) => {
@@ -44,7 +63,10 @@ export const isETABreached = (data) => {
   const deliveryTime = isoDurationToMilliseconds(
     deliveryFulfillment["@ondc/org/TAT"]
   );
-  const deliveryETA = new Date(createdAt.getTime() + deliveryTime);
+
+  const promiseBuffer = calculatePromiseBuffer(data.domain)
+
+  const deliveryETA = new Date(createdAt.getTime() + deliveryTime + promiseBuffer);
 
   if (!deliveryFulfillment?.state?.descriptor?.code) {
     return false;
