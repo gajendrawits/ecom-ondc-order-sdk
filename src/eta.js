@@ -15,29 +15,29 @@ function isoDurationToMilliseconds(iso) {
 }
 
 export const calculateEtaTime = (data) => {
-  const domain = data?.domain
+  const domain = data?.domain;
 
-  let promiseBuffer
+  let promiseBuffer;
 
-  if (domain === "ONDC:RET11") { // F&B
-    // promiseBuffer = 10 * 60 * 1000
-    promiseBuffer = 0
-  }
-  else if (domain === "ONDC:RET10") { // Grocery
+  if (domain === "ONDC:RET10") {
+    // Grocery
     // promiseBuffer = 30 * 60 * 1000
-    promiseBuffer = 0
-  }
-  else if (domain === "ONDC:RET14") { // Electronics
+    promiseBuffer = 0;
+  } else if (domain === "ONDC:RET11") {
+    // F&B
+    // promiseBuffer = 10 * 60 * 1000
+    promiseBuffer = 0;
+  } else if (domain === "ONDC:RET12") {
+    // Fashion
+    // promiseBuffer = 30 * 60 * 1000
+    promiseBuffer = 0;
+  } else if (domain === "ONDC:RET14") {
+    // Electronics
     // promiseBuffer = 20 * 60 * 1000
-    promiseBuffer = 0
-  }
-  else if (domain === "ONDC:RET12") { // Fashion
-    // promiseBuffer = 30 * 60 * 1000
-    promiseBuffer = 0
-  }
-  else {
+    promiseBuffer = 0;
+  } else {
     // promiseBuffer = 10 * 60 * 1000
-    promiseBuffer = 0
+    promiseBuffer = 0;
   }
 
   const createdAt = new Date(data?.createdAt);
@@ -58,10 +58,12 @@ export const calculateEtaTime = (data) => {
     deliveryFulfillment["@ondc/org/TAT"]
   );
 
-  const deliveryETA = new Date(createdAt.getTime() + deliveryTime + promiseBuffer);
+  const deliveryETA = new Date(
+    createdAt.getTime() + deliveryTime + promiseBuffer
+  );
 
-  return deliveryETA
-}
+  return deliveryETA;
+};
 
 export const isETABreached = (data) => {
   if (!data || typeof data !== "object") {
@@ -101,7 +103,9 @@ export const isETABreached = (data) => {
     return false;
   }
 
-  if (excludeBufferState.includes(deliveryFulfillment?.state?.descriptor?.code)) {
+  if (
+    excludeBufferState.includes(deliveryFulfillment?.state?.descriptor?.code)
+  ) {
     // Pre-Ship ETA Breach
     return currentTime >= deliveryETA;
   } else if (
