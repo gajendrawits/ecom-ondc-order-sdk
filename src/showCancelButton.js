@@ -98,6 +98,11 @@ export const cancellation = (actor, payload) => {
       // promiseBuffer = 30 * 60 * 1000
       promiseBuffer = 0;
       break;
+    case "ONDC:RET13":
+      // Fashion
+      // promiseBuffer = 30 * 60 * 1000
+      promiseBuffer = 0;
+      break;
     case "ONDC:RET14":
       // Electronics
       // promiseBuffer = 20 * 60 * 1000
@@ -228,28 +233,40 @@ export const cancellation = (actor, payload) => {
       );
     } else {
       if (allItemsCancellable) {
-        return (showCancelButtonStartTime = orderCreatedTimestamp + SCB);
+        return new Date(
+          (showCancelButtonStartTime = orderCreatedTimestamp + SCB)
+        );
       } else if (deliveryPromiseETABreach) {
-        return (showCancelButtonStartTime =
-          orderCreatedTimestamp + deliveryPromiseETA + SCB);
+        return new Date(
+          (showCancelButtonStartTime =
+            orderCreatedTimestamp + deliveryPromiseETA + SCB)
+        );
       }
       return false;
     }
   } else if (actor === "agent" || actor === "opsLead") {
     if (domain === "ONDC:RET11") {
       if (allItemsCancellable) {
-        return (showCancelButtonStartTime = orderCreatedTimestamp + SCB);
+        return new Date(
+          (showCancelButtonStartTime = orderCreatedTimestamp + SCB)
+        );
       } else if (deliveryPromiseETABreach) {
-        return (showCancelButtonStartTime =
-          orderCreatedTimestamp + deliveryPromiseETA + SCB);
+        return new Date(
+          (showCancelButtonStartTime =
+            orderCreatedTimestamp + deliveryPromiseETA + SCB)
+        );
       }
       return false;
     } else {
       if (allItemsCancellable) {
-        return (showCancelButtonStartTime = orderCreatedTimestamp + SCB);
+        return new Date(
+          (showCancelButtonStartTime = orderCreatedTimestamp + SCB)
+        );
       } else if (deliveryPromiseETABreach) {
-        return (showCancelButtonStartTime =
-          orderCreatedTimestamp + deliveryPromiseETA + SCB);
+        return new Date(
+          (showCancelButtonStartTime =
+            orderCreatedTimestamp + deliveryPromiseETA + SCB)
+        );
       }
       return false;
     }
@@ -258,6 +275,260 @@ export const cancellation = (actor, payload) => {
   return false;
 };
 
-export const forceCancellation = (actor, payload) => {};
+export const forceCancellation = (
+  actor,
+  payload,
+  cancelTriggered,
+  onCancelReceived,
+  ttlExpired
+) => {
+  const HL_CAP = 180 * 60 * 1000;
 
-export const autoForceCancellation = (actor, payload) => {};
+  const domain = payload?.domain;
+  const orderCreatedTimestamp = new Date(payload?.createdAt).getTime();
+  const currentTimestamp = Date.now();
+
+  const deliveryFulfillment = (payload.fulfillments || []).find(
+    (fulfillment) => fulfillment?.type === "Delivery"
+  );
+
+  if (!deliveryFulfillment || !deliveryFulfillment["@ondc/org/TAT"]) {
+    return false;
+  }
+
+  const fulfillmentTAT = isoDurationToMilliseconds(
+    deliveryFulfillment["@ondc/org/TAT"]
+  );
+
+  let promiseBuffer;
+  switch (domain) {
+    case "ONDC:RET10":
+      // Grocery
+      // promiseBuffer = 30 * 60 * 1000
+      promiseBuffer = 0;
+      break;
+    case "ONDC:RET11":
+      // F&B
+      // promiseBuffer = 10 * 60 * 1000
+      promiseBuffer = 0;
+      break;
+    case "ONDC:RET12":
+      // Fashion
+      // promiseBuffer = 30 * 60 * 1000
+      promiseBuffer = 0;
+      break;
+    case "ONDC:RET13":
+      // Fashion
+      // promiseBuffer = 30 * 60 * 1000
+      promiseBuffer = 0;
+      break;
+    case "ONDC:RET14":
+      // Electronics
+      // promiseBuffer = 20 * 60 * 1000
+      promiseBuffer = 0;
+      break;
+    default:
+      // promiseBuffer = 10 * 60 * 1000
+      promiseBuffer = 0;
+  }
+
+  const deliveryPromiseETA =
+    orderCreatedTimestamp + fulfillmentTAT + promiseBuffer;
+
+  const hyperlocalFlag = deliveryPromiseETA <= HL_CAP;
+
+  const deliveryPromiseETABreach =
+    currentTimestamp > orderCreatedTimestamp + deliveryPromiseETA;
+
+  const promiseBuffers = getPromiseBuffers("forceCancellation");
+
+  let SCB;
+  switch (domain) {
+    case "ONDC:RET10":
+      SCB = hyperlocalFlag
+        ? promiseBuffers?.find(
+            (promiseBuffer) => promiseBuffer.name === "Grocery H"
+          )?.value *
+          60 *
+          60 *
+          1000
+        : promiseBuffers?.find(
+            (promiseBuffer) => promiseBuffer.name === "Grocery NH"
+          )?.value *
+          60 *
+          60 *
+          1000;
+      break;
+    case "ONDC:RET11":
+      SCB = hyperlocalFlag
+        ? promiseBuffers?.find(
+            (promiseBuffer) => promiseBuffer.name === "F&B H"
+          )?.value *
+          60 *
+          60 *
+          1000
+        : promiseBuffers?.find(
+            (promiseBuffer) => promiseBuffer.name === "F&B NH"
+          )?.value *
+          60 *
+          60 *
+          1000;
+      break;
+    case "ONDC:RET12":
+      SCB = hyperlocalFlag
+        ? promiseBuffers?.find(
+            (promiseBuffer) => promiseBuffer.name === "Fashion H"
+          )?.value *
+          60 *
+          60 *
+          1000
+        : promiseBuffers?.find(
+            (promiseBuffer) => promiseBuffer.name === "Fashion NH"
+          )?.value *
+          60 *
+          60 *
+          1000;
+      break;
+    case "ONDC:RET13":
+      SCB = hyperlocalFlag
+        ? promiseBuffers?.find(
+            (promiseBuffer) => promiseBuffer.name === "BPC H"
+          )?.value *
+          60 *
+          60 *
+          1000
+        : promiseBuffers?.find(
+            (promiseBuffer) => promiseBuffer.name === "BPC NH"
+          )?.value *
+          60 *
+          60 *
+          1000;
+      break;
+    case "ONDC:RET14":
+      SCB = hyperlocalFlag
+        ? promiseBuffers?.find(
+            (promiseBuffer) => promiseBuffer.name === "Electronics H"
+          )?.value *
+          60 *
+          60 *
+          1000
+        : promiseBuffers?.find(
+            (promiseBuffer) => promiseBuffer.name === "Electronics NH"
+          )?.value *
+          60 *
+          60 *
+          1000;
+      break;
+    default:
+      SCB = hyperlocalFlag
+        ? promiseBuffers?.find(
+            (promiseBuffer) => promiseBuffer.name === "other H"
+          )?.value *
+          60 *
+          60 *
+          1000
+        : promiseBuffers?.find(
+            (promiseBuffer) => promiseBuffer.name === "other NH"
+          )?.value *
+          60 *
+          60 *
+          1000;
+  }
+
+  let showCancelButtonStartTime;
+
+  if (actor === "buyer") {
+    return false;
+  } else if (actor === "agent" || actor === "opsLead") {
+    if (cancelTriggered && !onCancelReceived && !ttlExpired) {
+      if (deliveryPromiseETABreach) {
+        return new Date(
+          (showCancelButtonStartTime =
+            orderCreatedTimestamp + deliveryPromiseETA + SCB)
+        );
+      }
+      return false;
+    }
+    return false;
+  }
+
+  return false;
+};
+
+export const autoForceCancellation = (
+  payload,
+  cancelTriggered,
+  onCancelReceived,
+  ttlExpired
+) => {
+  const domain = payload?.domain;
+  const orderCreatedTimestamp = new Date(payload?.createdAt).getTime();
+  const currentTimestamp = Date.now();
+
+  const deliveryFulfillment = (payload.fulfillments || []).find(
+    (fulfillment) => fulfillment?.type === "Delivery"
+  );
+
+  if (!deliveryFulfillment || !deliveryFulfillment["@ondc/org/TAT"]) {
+    return false;
+  }
+
+  const fulfillmentTAT = isoDurationToMilliseconds(
+    deliveryFulfillment["@ondc/org/TAT"]
+  );
+
+  let promiseBuffer;
+  switch (domain) {
+    case "ONDC:RET10":
+      // Grocery
+      // promiseBuffer = 30 * 60 * 1000
+      promiseBuffer = 0;
+      break;
+    case "ONDC:RET11":
+      // F&B
+      // promiseBuffer = 10 * 60 * 1000
+      promiseBuffer = 0;
+      break;
+    case "ONDC:RET12":
+      // Fashion
+      // promiseBuffer = 30 * 60 * 1000
+      promiseBuffer = 0;
+      break;
+    case "ONDC:RET13":
+      // Fashion
+      // promiseBuffer = 30 * 60 * 1000
+      promiseBuffer = 0;
+      break;
+    case "ONDC:RET14":
+      // Electronics
+      // promiseBuffer = 20 * 60 * 1000
+      promiseBuffer = 0;
+      break;
+    default:
+      // promiseBuffer = 10 * 60 * 1000
+      promiseBuffer = 0;
+  }
+
+  const deliveryPromiseETA =
+    orderCreatedTimestamp + fulfillmentTAT + promiseBuffer;
+
+  const deliveryPromiseETABreach =
+    currentTimestamp > orderCreatedTimestamp + deliveryPromiseETA;
+
+  if (!cancelTriggered && deliveryPromiseETABreach) {
+    return {
+      triggerCancel: true,
+    };
+  } else if (
+    cancelTriggered &&
+    !onCancelReceived &&
+    ttlExpired &&
+    deliveryPromiseETABreach
+  ) {
+    return {
+      triggerForceCancel: true,
+    };
+  }
+
+  return false;
+};
