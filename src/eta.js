@@ -19,19 +19,19 @@ export const calculateEtaTime = (data) => {
 
   let promiseBuffer
 
-  if (domain === "ONDC:RET11") {
+  if (domain === "ONDC:RET11") { // F&B
     // promiseBuffer = 10 * 60 * 1000
     promiseBuffer = 0
   }
-  else if (domain === "ONDC:RET12") {
+  else if (domain === "ONDC:RET10") { // Grocery
     // promiseBuffer = 30 * 60 * 1000
     promiseBuffer = 0
   }
-  else if (domain === "ONDC:RET13") {
+  else if (domain === "ONDC:RET14") { // Electronics
     // promiseBuffer = 20 * 60 * 1000
     promiseBuffer = 0
   }
-  else if (domain === "ONDC:RET14") {
+  else if (domain === "ONDC:RET12") { // Fashion
     // promiseBuffer = 30 * 60 * 1000
     promiseBuffer = 0
   }
