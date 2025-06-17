@@ -531,6 +531,3 @@ export const autoForceCancellation = (
 
   return false;
 };
-
-import { payload } from "../payload.js";
-console.log(forceCancellation("agent", payload, true, false, false));
