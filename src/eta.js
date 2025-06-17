@@ -1,4 +1,5 @@
 import { excludeBufferState, includeBufferState } from "../util/orderState.js";
+
 function isoDurationToMilliseconds(iso) {
   const regex = /P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?/;
   const match = iso.match(regex);
@@ -12,6 +13,57 @@ function isoDurationToMilliseconds(iso) {
 
   return (((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1000;
 }
+
+export const calculateEtaTime = (data) => {
+  const domain = data?.domain;
+
+  let promiseBuffer;
+
+  if (domain === "ONDC:RET10") {
+    // Grocery
+    // promiseBuffer = 30 * 60 * 1000
+    promiseBuffer = 0;
+  } else if (domain === "ONDC:RET11") {
+    // F&B
+    // promiseBuffer = 10 * 60 * 1000
+    promiseBuffer = 0;
+  } else if (domain === "ONDC:RET12") {
+    // Fashion
+    // promiseBuffer = 30 * 60 * 1000
+    promiseBuffer = 0;
+  } else if (domain === "ONDC:RET14") {
+    // Electronics
+    // promiseBuffer = 20 * 60 * 1000
+    promiseBuffer = 0;
+  } else {
+    // promiseBuffer = 10 * 60 * 1000
+    promiseBuffer = 0;
+  }
+
+  const createdAt = new Date(data?.createdAt);
+
+  const deliveryFulfillment = data?.fulfillments?.find(
+    (fulfillment) => fulfillment?.type === "Delivery"
+  );
+
+  if (!deliveryFulfillment) {
+    return false;
+  }
+
+  if (!deliveryFulfillment["@ondc/org/TAT"]) {
+    return false;
+  }
+
+  const deliveryTime = isoDurationToMilliseconds(
+    deliveryFulfillment["@ondc/org/TAT"]
+  );
+
+  const deliveryETA = new Date(
+    createdAt.getTime() + deliveryTime + promiseBuffer
+  );
+
+  return deliveryETA;
+};
 
 export const isETABreached = (data) => {
   if (!data || typeof data !== "object") {
@@ -44,13 +96,16 @@ export const isETABreached = (data) => {
   const deliveryTime = isoDurationToMilliseconds(
     deliveryFulfillment["@ondc/org/TAT"]
   );
+
   const deliveryETA = new Date(createdAt.getTime() + deliveryTime);
 
   if (!deliveryFulfillment?.state?.descriptor?.code) {
     return false;
   }
 
-  if (excludeBufferState.includes(deliveryFulfillment?.state?.descriptor?.code)) {
+  if (
+    excludeBufferState.includes(deliveryFulfillment?.state?.descriptor?.code)
+  ) {
     // Pre-Ship ETA Breach
     return currentTime >= deliveryETA;
   } else if (
