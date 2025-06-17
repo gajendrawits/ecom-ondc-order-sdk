@@ -43,7 +43,7 @@ export const getPromiseBuffers = (type) => {
       { domain: "other", name: "other H", value: 0 },
       { domain: "other", name: "other NH", value: 0 },
     ];
-  } else {
+  } else if (type === "autoForceCancellation") {
     return [
       { domain: "ONDC:RET10", name: "Grocery H", value: 0 },
       { domain: "ONDC:RET10", name: "Grocery NH", value: 0 },
@@ -58,6 +58,16 @@ export const getPromiseBuffers = (type) => {
       { domain: "other", name: "other H", value: 0 },
       { domain: "other", name: "other NH", value: 0 },
     ];
+  } else if (type === "calculateEtaTime") {
+    return [
+      { domain: "ONDC:RET10", name: "Grocery", value: 0 },
+      { domain: "ONDC:RET11", name: "F&B", value: 0 },
+      { domain: "ONDC:RET12", name: "Fashion", value: 0 },
+      { domain: "ONDC:RET14", name: "Electronics", value: 0 },
+      { domain: "other", name: "other", value: 0 },
+    ];
+  } else {
+    return [{ domain: "any", name: "any", value: 0 }];
   }
 };
 
@@ -521,3 +531,6 @@ export const autoForceCancellation = (
 
   return false;
 };
+
+import { payload } from "../payload.js";
+console.log(forceCancellation("agent", payload, true, false, false));
