@@ -99,7 +99,7 @@ export const cancellation = (actor, payload) => {
       promiseBuffer = 0;
       break;
     case "ONDC:RET13":
-      // Fashion
+      // BPC
       // promiseBuffer = 30 * 60 * 1000
       promiseBuffer = 0;
       break;
@@ -233,40 +233,34 @@ export const cancellation = (actor, payload) => {
       );
     } else {
       if (allItemsCancellable) {
-        return new Date(
-          (showCancelButtonStartTime = orderCreatedTimestamp + SCB)
-        );
+        showCancelButtonStartTime = orderCreatedTimestamp + SCB;
+        return new Date(showCancelButtonStartTime);
       } else if (deliveryPromiseETABreach) {
-        return new Date(
-          (showCancelButtonStartTime =
-            orderCreatedTimestamp + deliveryPromiseETA + SCB)
-        );
+        showCancelButtonStartTime =
+          orderCreatedTimestamp + deliveryPromiseETA + SCB;
+        return new Date(showCancelButtonStartTime);
       }
       return false;
     }
   } else if (actor === "agent" || actor === "opsLead") {
     if (domain === "ONDC:RET11") {
       if (allItemsCancellable) {
-        return new Date(
-          (showCancelButtonStartTime = orderCreatedTimestamp + SCB)
-        );
+        showCancelButtonStartTime = orderCreatedTimestamp + SCB;
+        return new Date(showCancelButtonStartTime);
       } else if (deliveryPromiseETABreach) {
-        return new Date(
-          (showCancelButtonStartTime =
-            orderCreatedTimestamp + deliveryPromiseETA + SCB)
-        );
+        showCancelButtonStartTime =
+          orderCreatedTimestamp + deliveryPromiseETA + SCB;
+        return new Date(showCancelButtonStartTime);
       }
       return false;
     } else {
       if (allItemsCancellable) {
-        return new Date(
-          (showCancelButtonStartTime = orderCreatedTimestamp + SCB)
-        );
+        showCancelButtonStartTime = orderCreatedTimestamp + SCB;
+        return new Date(showCancelButtonStartTime);
       } else if (deliveryPromiseETABreach) {
-        return new Date(
-          (showCancelButtonStartTime =
-            orderCreatedTimestamp + deliveryPromiseETA + SCB)
-        );
+        showCancelButtonStartTime =
+          orderCreatedTimestamp + deliveryPromiseETA + SCB;
+        return new Date(showCancelButtonStartTime);
       }
       return false;
     }
@@ -318,7 +312,7 @@ export const forceCancellation = (
       promiseBuffer = 0;
       break;
     case "ONDC:RET13":
-      // Fashion
+      // BPC
       // promiseBuffer = 30 * 60 * 1000
       promiseBuffer = 0;
       break;
@@ -442,10 +436,9 @@ export const forceCancellation = (
   } else if (actor === "agent" || actor === "opsLead") {
     if (cancelTriggered && !onCancelReceived && !ttlExpired) {
       if (deliveryPromiseETABreach) {
-        return new Date(
-          (showCancelButtonStartTime =
-            orderCreatedTimestamp + deliveryPromiseETA + SCB)
-        );
+        showCancelButtonStartTime =
+          orderCreatedTimestamp + deliveryPromiseETA + SCB;
+        return new Date(showCancelButtonStartTime);
       }
       return false;
     }
@@ -495,7 +488,7 @@ export const autoForceCancellation = (
       promiseBuffer = 0;
       break;
     case "ONDC:RET13":
-      // Fashion
+      // BPC
       // promiseBuffer = 30 * 60 * 1000
       promiseBuffer = 0;
       break;
