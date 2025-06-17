@@ -528,6 +528,5 @@ export const autoForceCancellation = (
   ) {
     return true;
   }
-
   return false;
 };
