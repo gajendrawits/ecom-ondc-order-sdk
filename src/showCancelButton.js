@@ -509,18 +509,14 @@ export const autoForceCancellation = (
     currentTimestamp > orderCreatedTimestamp + deliveryPromiseETA;
 
   if (!cancelTriggered && deliveryPromiseETABreach) {
-    return {
-      triggerCancel: true,
-    };
+    return true;
   } else if (
     cancelTriggered &&
     !onCancelReceived &&
     ttlExpired &&
     deliveryPromiseETABreach
   ) {
-    return {
-      triggerForceCancel: true,
-    };
+    return true;
   }
 
   return false;
